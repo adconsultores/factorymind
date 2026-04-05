@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 50" width="250" height="50">
+  <defs>
+    <style>
+      .bg-rect { fill: #151c28; stroke: rgba(46, 213, 115, 0.4); stroke-width: 1px; rx: 4px; }
+      .hex { fill: none; stroke: #2ed573; stroke-width: 1.5px; stroke-linejoin: round; }
+      .text-factory { fill: #ffffff; font-family: 'Inter', '-apple-system', 'Arial', sans-serif; font-size: 24px; font-weight: 600; letter-spacing: -0.5px; }
+      .text-mind { fill: #2ed573; font-family: 'Inter', '-apple-system', 'Arial', sans-serif; font-size: 24px; font-weight: 600; letter-spacing: -0.5px; }
+    </style>
+  </defs>
+
+  <!-- Logo Shape -->
+  <g transform="translate(5, 9)">
+    <rect x="0" y="0" width="32" height="32" class="bg-rect" />
+    <!-- Hexagon -->
+    <path class="hex" d="M23 20v-8a2 2 0 00-1-1.73l-5-2.88a2 2 0 00-2 0l-5 2.89A2 2 0 009 12v8a2 2 0 001 1.73l5 2.88a2 2 0 002 0l5-2.89A2 2 0 0023 20z" transform="translate(-7, -7) scale(0.8) translate(5, 5)" />
+  </g>
+
+  <!-- Text -->
+  <text x="45" y="32">
+    <tspan class="text-factory">factory</tspan><tspan class="text-mind">mind</tspan>
+  </text>
+</svg>
