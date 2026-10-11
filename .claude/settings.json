@@ -1,0 +1,14 @@
+{
+  "extraKnownMarketplaces": {
+    "hyperframes": {
+      "source": {
+        "source": "github",
+        "repo": "heygen-com/hyperframes"
+      },
+      "autoUpdate": true
+    }
+  },
+  "enabledPlugins": {
+    "hyperframes@hyperframes": true
+  }
+}
