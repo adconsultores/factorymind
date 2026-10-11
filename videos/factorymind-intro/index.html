@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>FactoryMind — intro de producto</title>
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "Inter";
+        src: url("assets/fonts/Inter-SemiBold.otf") format("opentype");
+        font-weight: 600;
+      }
+      @font-face {
+        font-family: "Inter";
+        src: url("assets/fonts/Inter-Regular.otf") format("opentype");
+        font-weight: 400;
+      }
+      :root {
+        --bg: #05080c;
+        --accent: #00f5c4;
+        --ink: #ffffff;
+        --muted: #a0aabf;
+        --grid: rgba(0, 245, 196, 0.08);
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--bg);
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: "Inter", sans-serif;
+      }
+      #bg-video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      #overlay {
+        position: absolute;
+        inset: 0;
+      }
+      #grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 80px 80px;
+      }
+      #vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at center, transparent 35%, rgba(5, 8, 12, 0.85) 100%);
+      }
+      #title-card {
+        position: absolute;
+        inset: 0;
+      }
+      .scene-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        padding: 120px 160px;
+        gap: 28px;
+      }
+      #mark {
+        display: block;
+        width: 132px;
+        height: 132px;
+      }
+      #hex {
+        fill: none;
+        stroke: var(--accent);
+        stroke-width: 3;
+        stroke-linejoin: round;
+      }
+      #title {
+        display: block;
+        color: var(--ink);
+        font-size: 150px;
+        font-weight: 600;
+        letter-spacing: -0.04em;
+        line-height: 1;
+      }
+      #title .accent {
+        color: var(--accent);
+      }
+      #rule {
+        display: block;
+        width: 520px;
+        height: 3px;
+        background: var(--accent);
+        transform-origin: center;
+      }
+      #tagline {
+        display: block;
+        color: var(--muted);
+        font-size: 40px;
+        font-weight: 400;
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+      }
+      #fade {
+        position: absolute;
+        inset: 0;
+        background: var(--bg);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="10"
+      data-width="1920"
+      data-height="1080"
+    >
+      <video
+        id="bg-video"
+        class="clip"
+        src="assets/bg.mp4"
+        muted
+        playsinline
+        data-start="0"
+        data-duration="10"
+        data-track-index="0"
+      ></video>
+
+      <div id="overlay" class="clip" data-start="0" data-duration="10" data-track-index="1">
+        <div id="grid"></div>
+        <div id="vignette"></div>
+      </div>
+
+      <section id="title-card" class="clip" data-start="0" data-duration="10" data-track-index="2">
+        <div class="scene-content">
+          <svg id="mark" viewBox="0 0 32 32">
+            <path
+              id="hex"
+              d="M27 21.5v-11a2.5 2.5 0 00-1.25-2.16l-8.5-4.9a2.5 2.5 0 00-2.5 0l-8.5 4.9A2.5 2.5 0 005 10.5v11a2.5 2.5 0 001.25 2.16l8.5 4.9a2.5 2.5 0 002.5 0l8.5-4.9A2.5 2.5 0 0027 21.5z"
+            />
+          </svg>
+          <h1 id="title">Factory<span class="accent">Mind</span></h1>
+          <div id="rule"></div>
+          <p id="tagline">Inteligencia industrial</p>
+        </div>
+        <div id="fade"></div>
+      </section>
+
+      <audio
+        id="music"
+        class="clip"
+        src="assets/music.mp3"
+        data-start="0"
+        data-duration="10"
+        data-track-index="3"
+        data-volume="0.9"
+      ></audio>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const hex = document.getElementById("hex");
+      const len = hex.getTotalLength();
+
+      // Rejilla: deriva lenta durante todo el plano
+      tl.fromTo("#grid", { opacity: 0, backgroundPosition: "0px 0px" }, { opacity: 1, backgroundPosition: "0px 80px", duration: 10, ease: "none" }, 0);
+      // Velo inicial que deja ver el fondo
+      tl.fromTo("#fade", { opacity: 1 }, { opacity: 0, duration: 1.2, ease: "power1.out" }, 0);
+
+      // Isotipo: trazado del hexágono
+      tl.fromTo(hex, { strokeDasharray: len, strokeDashoffset: len }, { strokeDashoffset: 0, duration: 1.4, ease: "power2.inOut" }, 0.6);
+      tl.fromTo("#mark", { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 1.0, ease: "power2.out" }, 0.6);
+
+      // Título en fade-in (desenfoque → nítido)
+      tl.fromTo("#title", { opacity: 0, y: 24, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.6, ease: "power2.out" }, 2.0);
+
+      // Regla de acento y claim
+      tl.fromTo("#rule", { scaleX: 0 }, { scaleX: 1, duration: 0.9, ease: "power3.inOut" }, 3.3);
+      tl.fromTo("#tagline", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 1.0, ease: "power2.out" }, 3.7);
+
+      // Cierre: fundido a negro
+      tl.fromTo("#fade", { opacity: 0 }, { opacity: 1, duration: 1.0, ease: "power1.in", immediateRender: false }, 9.0);
+
+      tl.seek(0);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
