@@ -1,4 +1,4 @@
-"""Montaje del vídeo FactoryMind · Antes y después (48 s, 1920x1080, 30 fps, sin audio).
+"""Montaje del vídeo FactoryMind · Antes y después (61 s con locución ElevenLabs, 1920x1080, 30 fps).
 
 Uso:  python3 render.py            -> extrae fotogramas de clips/, renderiza y codifica out/
       python3 render.py --preview  -> solo genera una hoja de contacto de control
@@ -15,7 +15,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 CLIPS = os.path.join(ROOT, "clips")
 WORK = os.path.join(ROOT, "build")
 OUT = os.path.join(ROOT, "out")
-W, H, FPS, DUR = 1920, 1080, 30, 48.0
+W, H, FPS, DUR = 1920, 1080, 30, 61.0
 
 NAVY = (11, 30, 51)
 RED = (229, 57, 53)
@@ -64,10 +64,10 @@ def window(t, start, end, fin=0.35, fout=0.3):
 # escena -> (archivo, segundo de inicio en el clip, factor de velocidad)
 CLIP_SPEC = {
     "E1": ("E1.mp4", 0.0, 0.9),
-    "E2": ("E2.mp4", 0.3, 1.0),
-    "E3": ("E3.mp4", 0.0, 1.0),
-    "E5": ("E5.mp4", 0.0, 8.0 / 9.0),
-    "E7": ("E7.mp4", 0.0, 1.0),
+    "E2": ("E2.mp4", 0.0, 1.0),
+    "E3": ("E3.mp4", 0.0, 0.7),
+    "E5": ("E5.mp4", 0.0, 0.8),
+    "E7": ("E7.mp4", 0.0, 0.69),
 }
 
 
@@ -83,6 +83,7 @@ def extract_frames():
 
 
 _nframes = {}
+CUR_K = 1.0
 
 
 def clip_frame(name, local_t):
@@ -90,7 +91,8 @@ def clip_frame(name, local_t):
     d = os.path.join(WORK, name)
     if name not in _nframes:
         _nframes[name] = len(os.listdir(d))
-    idx = int(round((start + local_t) * FPS)) + 1
+    # local_t llega en tiempo de guion; CUR_K lo pasa a tiempo real de la escena reajustada
+    idx = int(round((start + local_t * CUR_K) * FPS)) + 1
     idx = max(1, min(_nframes[name], idx))
     return Image.open(os.path.join(d, f"{idx:04d}.jpg")).convert("RGB")
 
@@ -585,20 +587,31 @@ def scene7(t):  # 42 – 48
     return base
 
 
-SCENES = [(0, 5, scene1), (5, 12, scene2), (12, 18, scene3), (18, 25, scene4),
-          (25, 34, scene5), (34, 42, scene6), (42, 48, scene7)]
+# Escenas: (inicio y fin en el guion original de 48 s, inicio y fin reales ajustados a la locución)
+SCENES = [((0, 5), (0.0, 6.9), scene1), ((5, 12), (6.9, 14.9), scene2), ((12, 18), (14.9, 23.3), scene3),
+          ((18, 25), (23.3, 33.3), scene4), ((25, 34), (33.3, 43.1), scene5), ((34, 42), (43.1, 52.3), scene6),
+          ((42, 48), (52.3, 61.0), scene7)]
+VO_DELAY = 0.3  # la locución empieza 0,3 s después del primer fotograma
 XF = 0.3  # fundido cruzado entre escenas
+
+
+def run_scene(i, t):
+    """Evalúa la escena i en el tiempo real t, convirtiéndolo a su tiempo de guion."""
+    global CUR_K
+    (a, b), (A, B), fn = SCENES[i]
+    CUR_K = (B - A) / (b - a)
+    return fn(a + (t - A) / CUR_K)
 
 
 def render_frame(n):
     t = n / FPS
-    for i, (a, b, fn) in enumerate(SCENES):
-        if a <= t < b or (i == len(SCENES) - 1 and t >= a):
-            img = fn(t)
+    for i, (_, (A, B), fn) in enumerate(SCENES):
+        if A <= t < B or (i == len(SCENES) - 1 and t >= A):
+            img = run_scene(i, t)
             # fundido con la escena anterior (excepto la entrada de E3, que tiene escaneo propio)
-            if i > 0 and t < a + XF and fn is not scene3:
-                prev = SCENES[i - 1][2](t)
-                img = Image.blend(prev, img, ease_io((t - a) / XF))
+            if i > 0 and t < A + XF and fn is not scene3:
+                prev = run_scene(i - 1, t)
+                img = Image.blend(prev, img, ease_io((t - A) / XF))
             if n < 10:
                 img = Image.blend(Image.new("RGBA", (W, H), (0, 0, 0, 255)), img, n / 10)
             return img.convert("RGB")
@@ -616,7 +629,7 @@ def main():
     os.makedirs(os.path.join(WORK, "frames"), exist_ok=True)
     os.makedirs(OUT, exist_ok=True)
     if "--preview" in sys.argv:
-        times = [1.5, 4, 7, 10.5, 13, 16.5, 19, 21, 24, 28, 33, 36, 38.5, 41, 43.5, 47]
+        times = [2, 5, 9, 13, 16, 21, 25, 29, 32, 37, 42, 46, 49, 52, 55, 60]
         thumbs = [render_frame(int(s * FPS)).resize((480, 270)) for s in times]
         sheet = Image.new("RGB", (480 * 4, 270 * 4))
         for k, th in enumerate(thumbs):
@@ -628,10 +641,15 @@ def main():
         for k, _ in enumerate(pool.imap_unordered(worker, range(total), chunksize=8)):
             if k % 120 == 0:
                 print(f"{k}/{total}", flush=True)
-    out = os.path.join(OUT, "factorymind-antes-despues-48s.mp4")
+    out = os.path.join(OUT, "factorymind-antes-despues-locucion.mp4")
+    vo = os.path.join(ROOT, "audio", "locucion-linea.mp3")
+    ms = int(VO_DELAY * 1000)
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-framerate", str(FPS),
-                    "-i", os.path.join(WORK, "frames", "%05d.jpg"),
+                    "-i", os.path.join(WORK, "frames", "%05d.jpg"), "-i", vo,
+                    "-filter_complex", f"[1:a]adelay={ms}|{ms},apad,loudnorm=I=-16:TP=-1.5:LRA=11[a]",
+                    "-map", "0:v", "-map", "[a]", "-t", str(DUR),
                     "-c:v", "libx264", "-preset", "slow", "-crf", "18", "-pix_fmt", "yuv420p",
+                    "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
                     "-movflags", "+faststart", out], check=True)
     print(out)
 
